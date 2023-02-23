@@ -1,0 +1,9 @@
+CREATE OR ALTER PROCEDURE [DeleteCustomer_Delete]
+(
+    @CustomerSN BIGINT
+)
+AS
+BEGIN
+    DELETE FROM [CUSTOMER]
+    WHERE SN=@CustomerSN
+END

@@ -1,0 +1,6 @@
+CREATE OR ALTER PROCEDURE [GetCustomers]
+AS
+BEGIN
+        SELECT [SN],[NAME], [PHONE_NO], [IS_DELETE], [CREATE_DATE], [UPDATE_DATE]
+        FROM [WebApiDatabase].[dbo].[CUSTOMER]
+END
