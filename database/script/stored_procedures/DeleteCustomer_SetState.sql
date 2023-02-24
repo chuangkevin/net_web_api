@@ -5,7 +5,7 @@ CREATE OR ALTER PROCEDURE [DeleteCustomer_SetState]
 AS
 BEGIN
     UPDATE [WebApiDatabase].[dbo].[CUSTOMER]
-   SET [IS_DELETE]=1
+   SET [IS_DELETE]=1,[UPDATE_DATE]=GETDATE()
     WHERE [SN]=@CustomerSN
 END
 

@@ -7,8 +7,10 @@ CREATE OR ALTER PROCEDURE [UpdateCustomer]
 AS
 BEGIN
     UPDATE [WebApiDatabase].[dbo].[CUSTOMER]
-   SET [NAME] = @Name
+	SET [NAME] = @Name
       ,[PHONE_NO] = @PhoneNumber
+	  ,[UPDATE_DATE]=GETDATE()
+	OUTPUT @CustomerSN
     WHERE [SN]=@CustomerSN
 END
 

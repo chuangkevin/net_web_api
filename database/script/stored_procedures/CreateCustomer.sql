@@ -10,6 +10,7 @@ BEGIN
             NAME,
             PHONE_NO
         )
+		OUTPUT Inserted.SN
         VALUES
         (
             @Name,
