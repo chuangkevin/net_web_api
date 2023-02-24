@@ -19,6 +19,125 @@ namespace WebAPI.Services
             _configuration = configuration;
             _connectionString = _configuration.GetConnectionString("DockerDB");
         }
+        public async Task<IEnumerable<CCUSTOMER>> GetCustomers()
+        {
+            IEnumerable<CCUSTOMER> ret;
+            using (var conn = new SqlConnection(_connectionString))
+            {
+                if (conn.State == ConnectionState.Closed)
+                    conn.Open();
+                try
+                {
+                    ret = await conn.QueryAsync<CCUSTOMER>("GetCustomers", commandType: CommandType.StoredProcedure);
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+                finally
+                {
+                    if (conn.State == ConnectionState.Open)
+                        conn.Close();
+                }
+            }
+            return ret;
+        }
+
+        public async Task<CCUSTOMER> GetCustomerBySN(Int64 customerSN)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("CustomerSN", customerSN, DbType.Int64);
+            CCUSTOMER ret = new CCUSTOMER();
+
+            using (var conn = new SqlConnection(_connectionString))
+            {
+
+                if (conn.State == ConnectionState.Closed)
+                    conn.Open();
+                try
+                {
+                    ret = await conn.QueryFirstOrDefaultAsync<CCUSTOMER>("GetCustomerBySN", parameters, commandType: CommandType.StoredProcedure);
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+                finally
+                {
+                    if (conn.State == ConnectionState.Open)
+                        conn.Close();
+                }
+            }
+            return ret;
+        }
+
+        /// <summary>
+        /// 取得狀態不為DELETE的顧客
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IEnumerable<CCUSTOMER>> GetCustomers_Alive()
+        {
+            IEnumerable<CCUSTOMER> ret;
+            using (var conn = new SqlConnection(_connectionString))
+            {
+                if (conn.State == ConnectionState.Closed)
+                    conn.Open();
+                try
+                {
+                    ret = await conn.QueryAsync<CCUSTOMER>("GetCustomers_Alive", commandType: CommandType.StoredProcedure);
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+                finally
+                {
+                    if (conn.State == ConnectionState.Open)
+                        conn.Close();
+                }
+            }
+            return ret;
+        }
+
+        /// <summary>
+        /// 可能是Create或是Update，根據Property決定行為
+        /// </summary>
+        /// <param name="targetCustomer"></param>
+        /// <returns></returns>
+        public async Task<bool> SaveCustomer(CCUSTOMER targetCustomer)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("Name", targetCustomer.NAME, DbType.String);
+            parameters.Add("PhoneNumber", targetCustomer.PHONE_NO, DbType.String);
+
+            using (var conn = new SqlConnection(_connectionString))
+            {
+                if (conn.State == ConnectionState.Closed)
+                    conn.Open();
+                try
+                {
+                    if (targetCustomer.IsUpdate)
+                    {
+                        parameters.Add("CustomerSN", targetCustomer.SN, DbType.Int64);
+                        await conn.ExecuteAsync("UpdateCustomer", parameters, commandType: CommandType.StoredProcedure);
+                    }
+                    else
+                        await conn.ExecuteAsync("CreateCustomer", parameters, commandType: CommandType.StoredProcedure);
+
+
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+                finally
+                {
+                    if (conn.State == ConnectionState.Open)
+                        conn.Close();
+                }
+            }
+            return true;
+        }
 
         /// <summary>
         /// 在SQL裡面真實刪除DB資料
@@ -83,98 +202,12 @@ namespace WebAPI.Services
             }
             return true;
         }
-
-        public async Task<IEnumerable<CCUSTOMER>> GetCustomers()
-        {
-            IEnumerable<CCUSTOMER> ret;
-            using (var conn = new SqlConnection(_connectionString))
-            {
-                if (conn.State == ConnectionState.Closed)
-                    conn.Open();
-                try
-                {
-                    ret = await conn.QueryAsync<CCUSTOMER>("GetCustomers", commandType: CommandType.StoredProcedure);
-                }
-                catch (Exception)
-                {
-                    throw;
-                }
-                finally
-                {
-                    if (conn.State == ConnectionState.Open)
-                        conn.Close();
-                }
-            }
-            return ret;
-        }
-
-        public async Task<CCUSTOMER> GetCustomerBySN(Int64 customerSN)
-        {
-            var parameters = new DynamicParameters();
-            parameters.Add("CustomerSN", customerSN, DbType.Int64);
-            CCUSTOMER ret = new CCUSTOMER();
-
-            using (var conn = new SqlConnection(_connectionString))
-            {
-
-                if (conn.State == ConnectionState.Closed)
-                    conn.Open();
-                try
-                {
-                    ret = await conn.QueryFirstOrDefaultAsync<CCUSTOMER>("GetCustomerBySN", parameters, commandType: CommandType.StoredProcedure);
-                }
-                catch (Exception)
-                {
-                    throw;
-                }
-                finally
-                {
-                    if (conn.State == ConnectionState.Open)
-                        conn.Close();
-                }
-            }
-            return ret;
-        }
-
-        /// <summary>
-        /// 可能是Create或是Update，根據Property決定行為
-        /// </summary>
-        /// <param name="targetCustomer"></param>
-        /// <returns></returns>
-        public async Task<bool> SaveCustomer(CCUSTOMER targetCustomer)
-        {
-            var parameters = new DynamicParameters();
-            parameters.Add("Name", targetCustomer.NAME, DbType.String);
-            parameters.Add("PhoneNumber", targetCustomer.PHONE_NO, DbType.String);
-
-            using (var conn = new SqlConnection(_connectionString))
-            {
-                if (conn.State == ConnectionState.Closed)
-                    conn.Open();
-                try
-                {
-                    if (targetCustomer.IsUpdate)
-                    {
-                        parameters.Add("CustomerSN", targetCustomer.SN, DbType.Int64);
-                        await conn.ExecuteAsync("UpdateCustomer", parameters, commandType: CommandType.StoredProcedure);
-                    }
-                    else
-                        await conn.ExecuteAsync("CreateCustomer", parameters, commandType: CommandType.StoredProcedure);
-
-
-                }
-                catch (Exception)
-                {
-                    throw;
-                }
-                finally
-                {
-                    if (conn.State == ConnectionState.Open)
-                        conn.Close();
-                }
-            }
-            return true;
-        }
     }
+
+   
+
+        
+
+       
 }
 
