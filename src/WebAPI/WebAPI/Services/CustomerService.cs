@@ -104,11 +104,13 @@ namespace WebAPI.Services
         /// </summary>
         /// <param name="targetCustomer"></param>
         /// <returns></returns>
-        public async Task<bool> SaveCustomer(CCUSTOMER targetCustomer)
+        public async Task<Int64> SaveCustomer(CCUSTOMER targetCustomer)
         {
             var parameters = new DynamicParameters();
             parameters.Add("Name", targetCustomer.NAME, DbType.String);
             parameters.Add("PhoneNumber", targetCustomer.PHONE_NO, DbType.String);
+            parameters.Add("SN", DbType.Int64, direction: ParameterDirection.ReturnValue);
+            Int64 ret = -1;
 
             using (var conn = new SqlConnection(_connectionString))
             {
@@ -119,11 +121,16 @@ namespace WebAPI.Services
                     if (targetCustomer.IsUpdate)
                     {
                         parameters.Add("CustomerSN", targetCustomer.SN, DbType.Int64);
-                        await conn.ExecuteAsync("UpdateCustomer", parameters, commandType: CommandType.StoredProcedure);
+                        var tt = await conn.ExecuteScalarAsync("UpdateCustomer", parameters, commandType: CommandType.StoredProcedure);
+
+                        Int64.TryParse(tt.ToString(),out ret);
                     }
                     else
-                        await conn.ExecuteAsync("CreateCustomer", parameters, commandType: CommandType.StoredProcedure);
+                    {
 
+                        var xx=await conn.ExecuteScalarAsync("CreateCustomer", parameters, commandType: CommandType.StoredProcedure);
+                        Int64.TryParse(xx.ToString(), out ret);
+                    }
 
                 }
                 catch (Exception)
@@ -136,7 +143,7 @@ namespace WebAPI.Services
                         conn.Close();
                 }
             }
-            return true;
+            return ret;
         }
 
         /// <summary>
@@ -204,10 +211,10 @@ namespace WebAPI.Services
         }
     }
 
-   
 
-        
 
-       
+
+
+
 }
 
