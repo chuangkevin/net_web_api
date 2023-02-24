@@ -17,13 +17,14 @@ namespace WebAPI.Pages
         }
         protected async Task GetCustomers()
         {
-            ForBind_CustomerEntries = await CustomerServices.GetCustomers();
+            ForBind_CustomerEntries = await CustomerServices.GetCustomers_Alive();
         }
         protected async Task SaveCustomer()
         {
             await CustomerServices.SaveCustomer(ForBind_Customer);
             await this.GetCustomers();
             this.ClearAll();
+            StateHasChanged();
         }
         protected async Task UpdateCustomer()
         {
@@ -50,10 +51,8 @@ namespace WebAPI.Pages
         }
         public void ClearAll()
         {
-            ForBind_Customer.NAME = "";
-            ForBind_Customer.PHONE_NO = "";
-            ForBind_Customer.IS_DELETE = false;
-            ForBind_Customer.UPDATE_DATE = null;
+          
+            ForBind_Customer = new CCUSTOMER();
         }
     }
 }

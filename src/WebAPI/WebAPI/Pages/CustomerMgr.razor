@@ -1,18 +1,22 @@
 ﻿@page "/customermgr"
-
+@page "/"
 
 <h2>Customer Infos</h2>
 <hr />
-<form>
+<EditForm Model="@ForBind_Customer" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <ValidationSummary></ValidationSummary>
     <div class="row">
         <div class="col-md-8">
             <div class="form-group">
                 <label for="ProductName" class="control-label">Customer Name</label>
                 <input for="ProductName" class="form-control" @bind="@ForBind_Customer.NAME" />
+                <ValidationMessage For ="@(()=>ForBind_Customer.NAME)"/>
             </div>
             <div class="form-group">
                 <label for="PhoneNumber" class="control-label">Phone Number</label>
                 <input for="PhoneNumber" class="form-control" @bind="@ForBind_Customer.PHONE_NO" />
+                <ValidationMessage For="@(()=>ForBind_Customer.PHONE_NO)" />
             </div>
         </div>
     </div>
@@ -22,7 +26,7 @@
         <div class="row">
             <div class="col-md-4">
                 <div class="form-group">
-                    <input type="button" class="btn btn-primary" @onclick="@UpdateCustomer" value="Update" />
+                    <input type="submit" class="btn btn-primary"  value="Update" />
 
                 </div>
             </div>
@@ -33,7 +37,7 @@
         <div class="row">
             <div class="col-md-4">
                 <div class="form-group">
-                    <input type="button" class="btn btn-primary" @onclick="@SaveCustomer" value="Save" />
+                    <input type="submit" class="btn btn-primary" value="Save" />
 
                 </div>
             </div>
@@ -72,4 +76,12 @@
             </tbody>
         </table>
     }
-</form>
+</EditForm>
+
+@code {
+    private async Task HandleValidSubmit()
+    {
+        await SaveCustomer();
+        
+    }
+}
