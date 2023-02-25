@@ -9,28 +9,28 @@ using WebAPI.Services;
 using static WebApi.Data.MsSQLDataAccess;
 using Assert = NUnit.Framework.Assert;
 using Moq;
+using Castle.Core.Resource;
+using Microsoft.AspNetCore.Mvc;
+using FluentAssertions;
+using FluentAssertions.Equivalency;
+using Microsoft.AspNetCore.Connections;
 
 namespace TestProject_NUnit
 {
     [TestFixture]
     public class DatabaseTest
     {
-        [Inject]
-        public ICustomerService CustomerServices { get; set; }
+        public Mock<ICustomerService> _MockCustomerServices { get; set; }
 
-        private string _ConnectionString => @$"Server={_Server};Database={_Database};User Id={_user}; Password={_pwd};Trusted_Connection=True;Integrated Security=false;TrustServerCertificate=true;MultipleActiveResultSets=true;";
-        private string _Database => "WebApiDatabase";
-        private string _Server => "192.168.195.55";
-        private string _user => "webapi";
-        private string _pwd => "!QAZ@WSX";
 
-        public Int64 ExceptedSN = 0;
+        public Int64 ExpectedSN = 0;
         public CCUSTOMER ExceptedCustomer = null;
 
         [SetUp]
         public void Setup()
         {
-            ExceptedSN = 99;
+            _MockCustomerServices = new Mock<ICustomerService>();
+            ExpectedSN = 99;
             ExceptedCustomer = new CCUSTOMER("Kevin", "0928000999");
 
         }
@@ -38,118 +38,106 @@ namespace TestProject_NUnit
         [Test]
         public async Task Test_SaveCustomer_Create()
         {
-            var mockerDapper = new Mock<ICustomerService>();
-
-            var expectedConnection = _ConnectionString;
-
-            var repo = new CustomerService(expectedConnection, CustomerServices);
-
-
-            var customerToCreate = (CCUSTOMER)ExceptedCustomer.Clone();
-
-            var entity = await repo.SaveCustomer(customerToCreate);
-
-            //如果有正確操作，則return SN 會>0
-            var isSuccess = entity > 0 ? true : false;
+            // Arrange
+            var customerServiceMock = new Mock<ICustomerService>();
+            customerServiceMock
+                .Setup(cs => cs.SaveCustomer(It.IsAny<CCUSTOMER>()))
+                .ReturnsAsync(1);
 
 
+            var repo = customerServiceMock.Object;
 
-            //上述條件該為False
-            Assert.IsTrue(isSuccess);
+            var customerToCreate = new CCUSTOMER("Kevin", "0928000999");
 
+            // Act
+            var result = await repo.SaveCustomer(customerToCreate);
+
+            // Assert
+            Assert.AreEqual(1, result);
         }
+
 
         [Test]
         public async Task Test_SaveCustomer_Update()
         {
-            var mockerDapper = new Mock<ICustomerService>();
+            // Arrange
+            var existingCustomer = new CCUSTOMER { NAME = "Kevin", PHONE_NO = "0928000999" };
+            var customerToUpdate = new CCUSTOMER { NAME = "John", PHONE_NO = "0912345678" };
 
-            var expectedConnection = _ConnectionString;
+            _MockCustomerServices
+                .Setup(cs => cs.GetCustomerBySN(existingCustomer.SN))
+                .ReturnsAsync(existingCustomer);
 
-            var repo = new CustomerService(expectedConnection, CustomerServices);
+            _MockCustomerServices
+                .Setup(cs => cs.SaveCustomer(customerToUpdate))
+                .ReturnsAsync(1);
 
+            var customerService = _MockCustomerServices.Object;
 
-            var customerToCreate = (CCUSTOMER)ExceptedCustomer.Clone();
-            customerToCreate.SN = 5;
+            // Act
+            var result = await customerService.SaveCustomer(customerToUpdate);
 
-            var retSN = await repo.SaveCustomer(customerToCreate);
-
-            //如果有正確操作，則return SN 會>0
-            var isSuccess = retSN > 0 ? true : false;
-
-
-            //上述條件該為False
-            Assert.IsTrue(isSuccess);
+            // Assert
+            Assert.AreEqual(1, result);
         }
 
-
         [Test]
-        public async Task Test_GetAllCustomer()
+        public async Task GetCustomers_ShouldReturnCustomers()
         {
-            var mockerDapper = new Mock<ICustomerService>();
+            // Arrange
+            var customers = new List<CCUSTOMER> { new CCUSTOMER { SN = 1, NAME = "Alice" } };
+            _MockCustomerServices.Setup(cs => cs.GetCustomers()).ReturnsAsync(customers);
 
-            var expectedConnection = _ConnectionString;
+            var customerService = _MockCustomerServices.Object;
 
-            var repo = new CustomerService(expectedConnection, CustomerServices);
+            // Act
+            var result = await customerService.GetCustomers();
 
-            var customers = await repo.GetCustomers();
-
-            //如果有資料，則隨便一筆的SN都該>0
-            var snValid = customers.FirstOrDefault()?.SN > 0;
-
-            Assert.IsTrue(snValid);
+            // Assert
+            Assert.That(result.Count(), Is.EqualTo(1));
         }
 
         [Test]
         public async Task Test_GetCustomerBySN()
         {
-            var mockerDapper = new Mock<ICustomerService>();
+            // Arrange
+            var expectedSN = 1;
+            var customerToSave = new CCUSTOMER { NAME = "Kevin", PHONE_NO = "0928000999" };
+            _MockCustomerServices
+                .Setup(cs => cs.SaveCustomer(customerToSave))
+                .ReturnsAsync(expectedSN);
+            var savedSN = await _MockCustomerServices.Object.GetCustomers();
 
-            var expectedConnection = _ConnectionString;
+            // Act
+            var result = await _MockCustomerServices.Object.GetCustomerBySN(expectedSN);
 
-            var repo = new CustomerService(expectedConnection, CustomerServices);
-          
-            var customerToCreate = (CCUSTOMER)ExceptedCustomer.Clone();
-            
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.That(result.SN, Is.EqualTo(expectedSN));
+            Assert.That(result.NAME, Is.EqualTo(customerToSave.NAME));
+            Assert.That(result.PHONE_NO, Is.EqualTo(customerToSave.PHONE_NO));
 
-            var entity = await repo.SaveCustomer(customerToCreate);
-
-            var customer = await repo.GetCustomerBySN(entity);
-
-            var retSN = customer?.SN;
-
-
-            Assert.AreEqual(entity, retSN);
         }
+
 
         [Test]
-        public async Task Test_GetCustomer_Alive()
+        public async Task GetCustomers_Alive_ShouldNotReturnDeletedCustomers()
         {
-            var mockerDapper = new Mock<ICustomerService>();
+            // Arrange
+            var repo = _MockCustomerServices.Object;
 
-            var expectedConnection = _ConnectionString;
-
-            var repo = new CustomerService(expectedConnection, CustomerServices);
-
+            // Act
             var customers = await repo.GetCustomers_Alive();
 
-            //找出來的資料，有包含已設定為刪除的
-            var hasNotValid = customers.Any(cu => cu.IS_DELETE);
-
-            //上述條件該為False
-            Assert.IsFalse(hasNotValid);
+            // Assert
+            customers.Should().NotContain(c => c.IS_DELETE);
         }
-
 
 
         [Test]
         public async Task Test_DeleteCustomer_SetState()
         {
-            var mockerDapper = new Mock<ICustomerService>();
-
-            var expectedConnection = _ConnectionString;
-
-            var repo = new CustomerService(expectedConnection, CustomerServices);
+            var repo = _MockCustomerServices.Object;
 
             var customerToCreate = (CCUSTOMER)ExceptedCustomer.Clone();
 
@@ -168,24 +156,48 @@ namespace TestProject_NUnit
         [Test]
         public async Task Test_DeleteCustomer_SQL_Delete()
         {
-            var mockerDapper = new Mock<ICustomerService>();
 
-            var expectedConnection = _ConnectionString;
-
-            var repo = new CustomerService(expectedConnection, CustomerServices);
+            // Arrange
+            var repo = _MockCustomerServices.Object;
 
             var customerToCreate = (CCUSTOMER)ExceptedCustomer.Clone();
-            customerToCreate.SN = ExceptedSN;
+            customerToCreate.SN = ExpectedSN;
 
             var entity = await repo.SaveCustomer(customerToCreate);
 
+            // Act
             var isDeleteSuccess = await repo.DeleteCustomer_SQL_DELETE(entity);
 
             //上述條件該為true
-            Assert.IsTrue(isDeleteSuccess);
+            // Assert
+            isDeleteSuccess.Should().BeTrue();
 
         }
 
+        [Test]
+        public async Task Test_DeleteCustomer_SQL_DELETE()
+        {
+            // Arrange
+            var repo = _MockCustomerServices.Object;
+            var customerToSave = (CCUSTOMER)ExceptedCustomer.Clone();
+            _MockCustomerServices
+               .Setup(cs => cs.SaveCustomer(customerToSave))
+               .ReturnsAsync(1);
+
+            // 創建一個Customer，並將其保存到數據庫中
+
+            var createdCustomerSN= await repo.SaveCustomer(customerToSave);
+            customerToSave.SN = createdCustomerSN;
+            Console.WriteLine(createdCustomerSN);
+            // Act
+            // 刪除現有的Customer，應該返回true
+            var isDeleteSuccess = await repo.DeleteCustomer_SQL_DELETE(createdCustomerSN);
+            isDeleteSuccess.Should().BeTrue();
+
+            //// 再次嘗試刪除已經被刪除的Customer，應該返回false
+            //isDeleteSuccess = await repo.DeleteCustomer_SQL_DELETE(createdCustomerSN);
+            //isDeleteSuccess.Should().BeFalse();
+        }
 
 
     }

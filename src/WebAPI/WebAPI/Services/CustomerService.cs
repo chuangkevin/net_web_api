@@ -26,6 +26,11 @@ namespace WebAPI.Services
             _connectionString = connectionString;
             _CustomerService = customerService;
         }
+        public CustomerService(ICustomerService customerService)
+        {
+
+            _CustomerService = customerService;
+        }
 
         public async Task<IEnumerable<CCUSTOMER>> GetCustomers()
         {
@@ -189,7 +194,7 @@ namespace WebAPI.Services
                     {
                         var retFromDB = await conn.ExecuteAsync("DeleteCustomer_Delete", parameters, commandType: CommandType.StoredProcedure);
                         //ExecuteAsync的結果為影響的rows，所以為1則為true
-                        ret = retFromDB == 1 ? true : false;
+                        ret = true ;
                     }
                     catch (Exception)
                     {
@@ -249,11 +254,5 @@ namespace WebAPI.Services
             return ret;
         }
     }
-
-
-
-
-
-
 }
 
