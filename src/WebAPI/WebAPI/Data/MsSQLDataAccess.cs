@@ -6,7 +6,7 @@ namespace WebApi.Data
     public class MsSQLDataAccess
     {
 
-        public class CCUSTOMER
+        public class CCUSTOMER:ICloneable
         {
 
             public long SN { get; set; }
@@ -55,6 +55,15 @@ namespace WebApi.Data
                 this.SN = customerSN;
             }
 
+            public CCUSTOMER(Int64 customerSN)
+                :this()
+            {
+                this.SN = customerSN;
+            }
+            public object Clone()
+            {
+                return this.MemberwiseClone();
+            }
         }
 
 

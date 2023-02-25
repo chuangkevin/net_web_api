@@ -2,7 +2,6 @@
 
 namespace WebAPI.IServices
 {
-
     public interface ICustomerService
     {
         public Task<IEnumerable<CCUSTOMER>> GetCustomers();
@@ -11,6 +10,9 @@ namespace WebAPI.IServices
         public Task<Int64> SaveCustomer(CCUSTOMER sales);
         public Task<bool> DeleteCustomer_SQL_DELETE(Int64 SN);
         public Task<bool> DeleteCustomer_SET_STATE(Int64 SN);
+
+        
+
     }
 
 }
