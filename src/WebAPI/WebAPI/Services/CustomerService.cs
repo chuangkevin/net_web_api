@@ -26,11 +26,6 @@ namespace WebAPI.Services
             _connectionString = connectionString;
             _CustomerService = customerService;
         }
-        public CustomerService(ICustomerService customerService)
-        {
-
-            _CustomerService = customerService;
-        }
 
         public async Task<IEnumerable<CCUSTOMER>> GetCustomers()
         {
@@ -145,13 +140,13 @@ namespace WebAPI.Services
                         parameters.Add("CustomerSN", targetCustomer.SN, DbType.Int64);
                         var tt = await conn.ExecuteScalarAsync("UpdateCustomer", parameters, commandType: CommandType.StoredProcedure);
 
-                        Int64.TryParse(tt.ToString(), out ret);
+                        Int64.TryParse(tt?.ToString(), out ret);
                     }
                     else
                     {
 
                         var xx = await conn.ExecuteScalarAsync("CreateCustomer", parameters, commandType: CommandType.StoredProcedure);
-                        Int64.TryParse(xx.ToString(), out ret);
+                        Int64.TryParse(xx?.ToString(), out ret);
                     }
 
                 }
