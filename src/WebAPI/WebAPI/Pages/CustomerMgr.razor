@@ -11,7 +11,7 @@
             <div class="form-group">
                 <label for="ProductName" class="control-label">Customer Name</label>
                 <input for="ProductName" class="form-control" @bind="@ForBind_Customer.NAME" />
-                <ValidationMessage For ="@(()=>ForBind_Customer.NAME)"/>
+                <ValidationMessage For="@(()=>ForBind_Customer.NAME)" />
             </div>
             <div class="form-group">
                 <label for="PhoneNumber" class="control-label">Phone Number</label>
@@ -26,7 +26,7 @@
         <div class="row">
             <div class="col-md-4">
                 <div class="form-group">
-                    <input type="submit" class="btn btn-primary"  value="Update" />
+                    <input type="submit" class="btn btn-primary" value="Update" />
 
                 </div>
             </div>
@@ -43,7 +43,10 @@
             </div>
         </div>
     }
-
+    <div>
+        <input type="checkbox" value="See Only Valid Customer" @onchange="OnSeeOnlyValidChanged" >
+        <label for="seeOnlyValid">Display Only Valid Customers</label>
+    </div>
     @if (ForBind_CustomerEntries == null)
     {
         <h3>Please wait, Loading the data.</h3>
@@ -82,6 +85,11 @@
     private async Task HandleValidSubmit()
     {
         await SaveCustomer();
-        
+    }
+
+    private async Task OnSeeOnlyValidChanged(ChangeEventArgs e)
+    {
+        SeeOnlyValid = (bool)e.Value;
+        await this.GetCustomers();
     }
 }
