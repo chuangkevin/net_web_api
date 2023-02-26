@@ -6,8 +6,11 @@ using WebAPI.Data;
 using WebAPI.IServices;
 using WebAPI.Services;
 using System.Reflection;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJsonFile("appsettings.json");
+var config = builder.Configuration;
 
 //新加入用來Host API
 builder.Services.AddMvc(setupAction: option => option.EnableEndpointRouting = false)
@@ -19,7 +22,10 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddSingleton<ICustomerService, CustomerService>();
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient<IApiService, ApiService>(client =>
+{
+    client.BaseAddress = new Uri(config.GetValue<string>("BaseUrl"));
+});
 
 
 builder.Services.AddSwaggerGen(c =>

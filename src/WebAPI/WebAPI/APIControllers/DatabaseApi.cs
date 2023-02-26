@@ -38,6 +38,29 @@ namespace WebAPI.APIControllers
             }
         }
 
+        /// <summary>
+        /// Return all customers.
+        /// ApiKey : KevinChuang
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<IEnumerable<CCUSTOMER>>> GetCustomersAlive(
+    [FromServices] ICustomerService customerService,
+    [FromHeader(Name = "X-Api-Key")] string apiKey)
+        {
+            if (apiKey == _apiKey)
+            {
+                var customers = await customerService.GetCustomers_Alive();
+                return Ok(customers);
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
 
         /// <summary>
         /// Return specific customer by SN.
@@ -92,7 +115,7 @@ namespace WebAPI.APIControllers
         {
             if (apiKey == _apiKey)
             {
-                CCUSTOMER toCreate = new CCUSTOMER(requestParam.ToString());
+                CCUSTOMER toCreate = new CCUSTOMER(requestParam.ToString(),false);
                 var result = await customerService.SaveCustomer(toCreate);
                 return Ok(result);
             }
