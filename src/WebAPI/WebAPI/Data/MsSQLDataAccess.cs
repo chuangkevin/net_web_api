@@ -6,7 +6,7 @@ namespace WebApi.Data
     public class MsSQLDataAccess
     {
 
-        public class CCUSTOMER:ICloneable
+        public class CCUSTOMER : ICloneable
         {
 
             public long SN { get; set; }
@@ -29,6 +29,7 @@ namespace WebApi.Data
             public CCUSTOMER()
             {
                 IsUpdate = false;
+                SN = -1;
 
             }
             public CCUSTOMER(string customerName, string customerPhoneNo)
@@ -56,7 +57,7 @@ namespace WebApi.Data
             }
 
             public CCUSTOMER(Int64 customerSN)
-                :this()
+                : this()
             {
                 this.SN = customerSN;
             }
