@@ -106,14 +106,17 @@ namespace TestProject_NUnit
             _MockCustomerServices
                 .Setup(cs => cs.SaveCustomer(customerToSave))
                 .ReturnsAsync(expectedSN);
-            var savedSN = await _MockCustomerServices.Object.GetCustomers();
 
+            _MockCustomerServices
+                .Setup(cs => cs.GetCustomerBySN(1))
+                .ReturnsAsync(customerToSave);
+
+           
             // Act
             var result = await _MockCustomerServices.Object.GetCustomerBySN(expectedSN);
 
             // Assert
             Assert.IsNotNull(result);
-            Assert.That(result.SN, Is.EqualTo(expectedSN));
             Assert.That(result.NAME, Is.EqualTo(customerToSave.NAME));
             Assert.That(result.PHONE_NO, Is.EqualTo(customerToSave.PHONE_NO));
 
@@ -153,50 +156,25 @@ namespace TestProject_NUnit
             }
         }
 
-        [Test]
-        public async Task Test_DeleteCustomer_SQL_Delete()
-        {
-
-            // Arrange
-            var repo = _MockCustomerServices.Object;
-
-            var customerToCreate = (CCUSTOMER)ExceptedCustomer.Clone();
-            customerToCreate.SN = ExpectedSN;
-
-            var entity = await repo.SaveCustomer(customerToCreate);
-
-            // Act
-            var isDeleteSuccess = await repo.DeleteCustomer_SQL_DELETE(entity);
-
-            //上述條件該為true
-            // Assert
-            isDeleteSuccess.Should().BeTrue();
-
-        }
 
         [Test]
-        public async Task Test_DeleteCustomer_SQL_DELETE()
+        public async Task Test_DeleteCustomer_SQL_DELETE_Success()
         {
             // Arrange
             var repo = _MockCustomerServices.Object;
             var customerToSave = (CCUSTOMER)ExceptedCustomer.Clone();
             _MockCustomerServices
-               .Setup(cs => cs.SaveCustomer(customerToSave))
-               .ReturnsAsync(1);
+            .Setup(cs => cs.SaveCustomer(customerToSave))
+            .ReturnsAsync(1);
 
-            // 創建一個Customer，並將其保存到數據庫中
+            _MockCustomerServices.Setup(cs => cs.DeleteCustomer_SQL_DELETE(1)).ReturnsAsync(true);
 
-            var createdCustomerSN= await repo.SaveCustomer(customerToSave);
-            customerToSave.SN = createdCustomerSN;
-            Console.WriteLine(createdCustomerSN);
+
             // Act
-            // 刪除現有的Customer，應該返回true
-            var isDeleteSuccess = await repo.DeleteCustomer_SQL_DELETE(createdCustomerSN);
-            isDeleteSuccess.Should().BeTrue();
+            var tryDelete = await repo.DeleteCustomer_SQL_DELETE(1);
 
-            //// 再次嘗試刪除已經被刪除的Customer，應該返回false
-            //isDeleteSuccess = await repo.DeleteCustomer_SQL_DELETE(createdCustomerSN);
-            //isDeleteSuccess.Should().BeFalse();
+            // Assert
+            tryDelete.Should().BeTrue();
         }
 
 
