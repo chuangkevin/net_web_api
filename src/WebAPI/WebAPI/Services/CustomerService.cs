@@ -15,10 +15,11 @@ namespace WebAPI.Services
         public IConfiguration _configuration { get; }
         public string _connectionString { get; }
 
-        public CustomerService(IConfiguration configuration)
+      
+        public CustomerService(IConfiguration configuration, string _conncetionString)
         {
             _configuration = configuration;
-            _connectionString = _configuration.GetConnectionString("DockerDB");
+            _connectionString = _conncetionString ?? _configuration.GetConnectionString("DockerDB");
         }
 
         public CustomerService(string connectionString, ICustomerService customerService)
@@ -189,7 +190,7 @@ namespace WebAPI.Services
                     {
                         var retFromDB = await conn.ExecuteAsync("DeleteCustomer_Delete", parameters, commandType: CommandType.StoredProcedure);
                         //ExecuteAsync的結果為影響的rows，所以為1則為true
-                        ret = true ;
+                        ret = true;
                     }
                     catch (Exception)
                     {

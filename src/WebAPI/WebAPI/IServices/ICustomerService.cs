@@ -11,8 +11,6 @@ namespace WebAPI.IServices
         public Task<bool> DeleteCustomer_SQL_DELETE(Int64 SN);
         public Task<bool> DeleteCustomer_SET_STATE(Int64 SN);
 
-        
-
     }
 
 }

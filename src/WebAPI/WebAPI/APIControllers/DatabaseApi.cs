@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Text.Json;
@@ -9,33 +10,25 @@ using static WebApi.Data.MsSQLDataAccess;
 
 namespace WebAPI.APIControllers
 {
+    /// <summary>
+    /// Return all customers.
+    /// ApiKey : KevinChuang
+    /// </summary>
+    /// <returns></returns>
     [Route("api/[controller]/[action]")]
     [ApiController]
     public class DatabaseApiController : ControllerBase
     {
         private string _apiKey = "KevinChuang";
 
-        /// <summary>
-        /// Return all customers.
-        /// ApiKey : KevinChuang
-        /// </summary>
-        /// <returns></returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<IEnumerable<CCUSTOMER>>> GetCustomers(
-    [FromServices] ICustomerService customerService,
-    [FromHeader(Name = "X-Api-Key")] string apiKey)
+            [FromServices] ICustomerService customerService)
         {
-            if (apiKey == _apiKey)
-            {
-                var customers = await customerService.GetCustomers();
-                return Ok(customers);
-            }
-            else
-            {
-                return Unauthorized();
-            }
+            var customers = await customerService.GetCustomers();
+            return Ok(customers);
         }
 
         /// <summary>
@@ -47,18 +40,12 @@ namespace WebAPI.APIControllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<IEnumerable<CCUSTOMER>>> GetCustomersAlive(
-    [FromServices] ICustomerService customerService,
-    [FromHeader(Name = "X-Api-Key")] string apiKey)
+    [FromServices] ICustomerService customerService)
         {
-            if (apiKey == _apiKey)
-            {
-                var customers = await customerService.GetCustomers_Alive();
-                return Ok(customers);
-            }
-            else
-            {
-                return Unauthorized();
-            }
+
+            var customers = await customerService.GetCustomers_Alive();
+            return Ok(customers);
+
         }
 
 
@@ -72,19 +59,16 @@ namespace WebAPI.APIControllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetCustomersBySN([FromServices] ICustomerService customerService
-            , [FromHeader(Name = "X-Api-Key")] string apiKey
             , Int64 customerSN)
         {
-            if (apiKey == _apiKey)
+
+            var customer = await customerService.GetCustomerBySN(customerSN);
+            if (customer != null)
             {
-                var customer = await customerService.GetCustomerBySN(customerSN);
-                if (customer != null)
-                {
-                    return Ok(customer);
-                }
-                return NotFound();
+                return Ok(customer);
             }
-            return Unauthorized();
+            return NotFound();
+
         }
 
 
@@ -111,16 +95,13 @@ namespace WebAPI.APIControllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CreateCustomer([FromServices] ICustomerService customerService
             , [FromBody] JsonElement requestParam
-            , [FromHeader(Name = "X-Api-Key")] string apiKey)
+           )
         {
-            if (apiKey == _apiKey)
-            {
-                CCUSTOMER toCreate = new CCUSTOMER(requestParam.ToString(),false);
-                var result = await customerService.SaveCustomer(toCreate);
-                return Ok(result);
-            }
 
-            return Unauthorized();
+            CCUSTOMER toCreate = new CCUSTOMER(requestParam.ToString(), false);
+            var result = await customerService.SaveCustomer(toCreate);
+            return Ok(result);
+
         }
 
         /// <summary>
@@ -143,16 +124,13 @@ namespace WebAPI.APIControllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UpdateCustomer([FromServices] ICustomerService customerService
             , [FromBody] JsonElement requestParam
-            , [FromHeader(Name = "X-Api-Key")] string apiKey)
+           )
         {
-            if (apiKey == _apiKey)
-            {
-                CCUSTOMER toCreate = new CCUSTOMER(requestParam.ToString());
-                var result = await customerService.SaveCustomer(toCreate);
-                return Ok(result);
-            }
 
-            return Unauthorized();
+            CCUSTOMER toCreate = new CCUSTOMER(requestParam.ToString());
+            var result = await customerService.SaveCustomer(toCreate);
+            return Ok(result);
+
         }
 
         /// <summary>
@@ -165,16 +143,12 @@ namespace WebAPI.APIControllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> DeleteCustomer([FromServices] ICustomerService customerService
-            , [FromHeader(Name = "X-Api-Key")] string apiKey
             , Int64 customerSN)
         {
-            if (apiKey == _apiKey)
-            {
-                var isDeleted = await customerService.DeleteCustomer_SET_STATE(customerSN);
-                return Ok(isDeleted);
-            }
 
-            return Unauthorized();
+            var isDeleted = await customerService.DeleteCustomer_SET_STATE(customerSN);
+            return Ok(isDeleted);
+
         }
     }
 }
